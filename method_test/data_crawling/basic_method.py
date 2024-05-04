@@ -1,9 +1,9 @@
 import os, logging, traceback, json, requests, time, re
 from datetime import date 
 from requests import get
-from fake_useragent import UserAgent
 from urllib.request import urlopen
 import platform
+import xml.etree.ElementTree as ET
 
 if platform.uname()[0] == "Windows":
     import pywinauto
@@ -254,3 +254,32 @@ def filter_json(input_json, option):
                 ["sido"] == "11" and f"{option[:-1]}" in x["properties"]["temp"]]
     output_json = json.dumps(output_dict)
     return output_json
+
+def get_chrome_version():
+    """
+    크롬 버전을 가져오는 함수입니다.
+    
+    가능한 경로에서 크롬 버전을 찾아 반환합니다.
+    크롬이 설치되어 있지 않은 경우 "Chrome is not installed."를 반환합니다.
+    
+    Returns:
+        str: 크롬 버전 또는 "Chrome is not installed."
+    """
+    possible_paths = [
+        r'C:\Program Files\Google\Chrome\Application\chrome.VisualElementsManifest.xml',
+        r'C:\Program Files (x86)\Google\Chrome\Application\chrome.VisualElementsManifest.xml'
+    ]
+    version = "Chrome is not installed."
+
+    for path in possible_paths:
+        if os.path.exists(path):
+            try:
+                tree = ET.parse(path)
+                root = tree.getroot()
+                visual_elements = root.find("VisualElements")
+                logo_path = visual_elements.get("Square150x150Logo")
+                version = logo_path.split("\\")[0]
+                break
+            except Exception as e:
+                version = str(e)
+    return version
